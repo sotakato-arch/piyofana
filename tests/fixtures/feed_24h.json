@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-15T20:07:05.560Z",
+  "range": {
+    "from": "2026-11-14T20:07:05.560Z",
+    "to": "2026-11-15T20:07:05.560Z"
+  },
+  "records": [
+    {
+      "event_id": "fx-001",
+      "datetime": "2026-11-14T22:00:00.000Z",
+      "type": "BreastFeeding",
+      "last": "left",
+      "leftTime": 573.97624194622,
+      "rightTime": 543.53102600574
+    },
+    {
+      "event_id": "fx-002",
+      "datetime": "2026-11-14T22:25:00.000Z",
+      "type": "BreastFeeding",
+      "leftTime": 492.34350097179
+    },
+    {
+      "event_id": "fx-003",
+      "datetime": "2026-11-14T23:30:00.000Z",
+      "type": "BreastFeeding",
+      "last": "left",
+      "rightTime": 660
+    },
+    {
+      "event_id": "fx-004",
+      "datetime": "2026-11-15T00:10:00.000Z",
+      "type": "Formula",
+      "value": {
+        "value": 40,
+        "unit": "ml"
+      }
+    },
+    {
+      "event_id": "fx-005",
+      "datetime": "2026-11-15T01:00:00.000Z",
+      "type": "ExpressedBreastMilk",
+      "value": {
+        "value": 30,
+        "unit": "ml"
+      }
+    },
+    {
+      "event_id": "fx-006",
+      "datetime": "2026-11-15T02:00:00.000Z",
+      "type": "Pumping",
+      "value": {
+        "value": 30,
+        "unit": "ml"
+      },
+      "memo": "test memo"
+    },
+    {
+      "event_id": "fx-007",
+      "datetime": "2026-11-15T03:00:00.000Z",
+      "type": "Pee"
+    },
+    {
+      "event_id": "fx-008",
+      "datetime": "2026-11-15T04:00:00.000Z",
+      "type": "Poop"
+    },
+    {
+      "event_id": "fx-009",
+      "datetime": "2026-11-15T05:00:00.000Z",
+      "type": "Poop",
+      "details": {
+        "amount": "normal",
+        "hardness": "soft",
+        "color": "yellow"
+      }
+    },
+    {
+      "event_id": "fx-010",
+      "datetime": "2026-11-15T06:00:00.000Z",
+      "type": "Foot",
+      "value": {
+        "left": {
+          "value": 9.5,
+          "unit": "cm"
+        },
+        "right": {
+          "value": 9.6,
+          "unit": "cm"
+        }
+      }
+    },
+    {
+      "event_id": "fx-011",
+      "datetime": "2026-11-15T07:00:00.000Z",
+      "type": "Weight",
+      "value": {
+        "value": 4.2,
+        "unit": "kg"
+      }
+    },
+    {
+      "event_id": "fx-012",
+      "datetime": "2026-11-15T08:00:00.000Z",
+      "type": "FutureThing"
+    }
+  ]
+}

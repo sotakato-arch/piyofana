@@ -1,0 +1,35 @@
+# Allowlist strategy: ignore everything by default, then unignore what belongs.
+# This repository is PUBLIC. Records, credentials, and host details must never
+# be committed, so the default is exclusion rather than enumeration.
+*
+!*/
+
+# --- intended project files ---
+!.gitignore
+!.env.example
+!README.md
+!pyproject.toml
+!uv.lock
+!docker-compose.yml
+!docker-compose.test.yml
+!.dockerignore
+!scripts/*.sh
+!collector/sql/*.sql
+!Dockerfile
+!collector/**/*.py
+!sql/**/*.sql
+!dashboards/*.json
+!alerts/*.json
+!tests/**/*.py
+!tests/fixtures/*.json
+!docs/**/*.md
+
+# --- never, under any circumstances ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+docs/local/
+data/
+*.json.gz

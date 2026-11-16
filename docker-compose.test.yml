@@ -1,0 +1,28 @@
+name: piyofana-test
+
+services:
+  testdb:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  test:
+    build:
+      context: .
+      target: dev
+    environment:
+      TEST_DATABASE_URL: postgresql://postgres:test@testdb/postgres
+    volumes:
+      - ./collector:/app/collector:ro
+      - ./tests:/app/tests:ro
+    command: ["-q"]
+    depends_on:
+      testdb:
+        condition: service_healthy

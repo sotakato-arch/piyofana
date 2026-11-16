@@ -1,0 +1,76 @@
+{
+  "apiVersion": "rules.alerting.grafana.app/v1beta1",
+  "kind": "AlertRule",
+  "metadata": {
+    "name": "piyolog-diapers-24h",
+    "annotations": {
+      "grafana.app/folder": "piyolog"
+    }
+  },
+  "spec": {
+    "title": "おむつが24時間で6回未満",
+    "paused": false,
+    "trigger": {
+      "interval": "5m"
+    },
+    "for": "15m",
+    "noDataState": "Alerting",
+    "execErrState": "Error",
+    "missingSeriesEvalsToResolve": 1,
+    "labels": {
+      "app": "piyolog",
+      "severity": "warning"
+    },
+    "annotations": {
+      "summary": "直近24時間のおしっこ・うんちの記録が {{ $values.A.Value }} 回です（6回未満）。",
+      "description": "ぴよログのおしっこ＋うんちの記録数（直近24時間）が6回を下回っています。記録漏れでないか、また赤ちゃんの様子を確認してください。コレクターが止まっている場合も件数が減るので、ダッシュボードの「収集の状態」も確認してください。"
+    },
+    "expressions": {
+      "A": {
+        "datasourceUID": "piyolog-postgres",
+        "relativeTimeRange": {
+          "from": "24h0m0s",
+          "to": "0s"
+        },
+        "model": {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "piyolog-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*)::float8 AS diapers FROM events WHERE type IN ('Pee','Poop') AND ts > now() - interval '24 hours'"
+        }
+      },
+      "B": {
+        "source": true,
+        "queryType": "threshold",
+        "model": {
+          "refId": "B",
+          "type": "threshold",
+          "expression": "A",
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "conditions": [
+            {
+              "evaluator": {
+                "type": "lt",
+                "params": [
+                  6
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "panelRef": {
+      "dashboardUID": "piyolog-overview",
+      "panelID": 4
+    }
+  }
+}

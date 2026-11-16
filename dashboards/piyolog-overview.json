@@ -1,0 +1,2200 @@
+{
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "piyolog-overview",
+    "annotations": {
+      "grafana.app/folder": "piyolog"
+    }
+  },
+  "spec": {
+    "title": "ぴよログ 🐣 赤ちゃんダッシュボード",
+    "tags": [
+      "piyolog"
+    ],
+    "timezone": "Asia/Tokyo",
+    "schemaVersion": 41,
+    "editable": true,
+    "graphTooltip": 1,
+    "refresh": "5m",
+    "time": {
+      "from": "now-14d",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "1m",
+        "5m",
+        "15m",
+        "1h"
+      ]
+    },
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": []
+    },
+    "description": "上段は常に直近24時間、体重は全期間、推移と記録は右上の期間で表示します。",
+    "panels": [
+      {
+        "id": 1,
+        "type": "row",
+        "title": "🐣 いま（直近24時間）",
+        "collapsed": false,
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 24,
+          "h": 1
+        },
+        "panels": []
+      },
+      {
+        "id": 2,
+        "type": "stat",
+        "title": "前回の授乳から",
+        "description": "母乳・ミルク・搾母乳の最新の記録からの経過時間。3時間でオレンジ、4時間で赤。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 0,
+          "y": 1,
+          "w": 5,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT EXTRACT(EPOCH FROM now() - max(ts)) / 3600.0 AS \"前回の授乳から\" FROM events WHERE type IN ('BreastFeeding','Formula','ExpressedBreastMilk')"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "orange",
+                  "value": 3
+                },
+                {
+                  "color": "red",
+                  "value": 4
+                }
+              ]
+            },
+            "unit": "suffix:時間",
+            "decimals": 1,
+            "noValue": "記録なし"
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 3,
+        "type": "stat",
+        "title": "前回のおむつから",
+        "description": "おしっこ・うんちの最新の記録からの経過時間。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 5,
+          "y": 1,
+          "w": 4,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT EXTRACT(EPOCH FROM now() - max(ts)) / 3600.0 AS \"前回のおむつから\" FROM events WHERE type IN ('Pee','Poop')"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "#3274D9",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix:時間",
+            "decimals": 1,
+            "noValue": "記録なし"
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 4,
+        "type": "stat",
+        "title": "おむつ（24時間）",
+        "description": "直近24時間のおしっこ＋うんちの記録数。6回未満で赤になり、アラートが送られます。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 9,
+          "y": 1,
+          "w": 4,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT count(*) AS \"おむつ\" FROM events WHERE type IN ('Pee','Poop') AND ts > now() - interval '24 hours'"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 6
+                }
+              ]
+            },
+            "unit": "suffix:回"
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 5,
+        "type": "stat",
+        "title": "内訳",
+        "description": "直近24時間のおしっこ・うんちの回数。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 13,
+          "y": 1,
+          "w": 4,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT count(*) FILTER (WHERE type = 'Pee') AS \"💧 おしっこ\", count(*) FILTER (WHERE type = 'Poop') AS \"💩 うんち\" FROM events WHERE ts > now() - interval '24 hours'"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "#73BFEB",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "💧 おしっこ"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#73BFEB"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "💩 うんち"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#A0784B"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value_and_name",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 6,
+        "type": "stat",
+        "title": "授乳（24時間）",
+        "description": "直近24時間の母乳・ミルク・搾母乳の回数。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 17,
+          "y": 1,
+          "w": 3,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT count(*) AS \"授乳\" FROM events WHERE type IN ('BreastFeeding','Formula','ExpressedBreastMilk') AND ts > now() - interval '24 hours'"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "#B877D9",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix:回"
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 7,
+        "type": "stat",
+        "title": "ミルク量（24時間）",
+        "description": "直近24時間のミルク＋搾母乳の合計（母乳の量は含みません）。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 20,
+          "y": 1,
+          "w": 4,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT COALESCE(sum(value_num), 0) AS \"ミルク量\" FROM events WHERE type IN ('Formula','ExpressedBreastMilk','Drink') AND ts > now() - interval '24 hours'"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "#5794F2",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "ml"
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 8,
+        "type": "row",
+        "title": "⚖️ 体重",
+        "collapsed": false,
+        "gridPos": {
+          "x": 0,
+          "y": 6,
+          "w": 24,
+          "h": 1
+        },
+        "panels": []
+      },
+      {
+        "id": 9,
+        "type": "stat",
+        "title": "最新の体重",
+        "description": "いちばん新しい体重の記録（kgの記録はgに換算）。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 0,
+          "y": 7,
+          "w": 4,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "WITH w AS (SELECT ts, (CASE WHEN value_unit = 'kg' THEN value_num * 1000 ELSE value_num END)::float8 AS g FROM events WHERE type = 'Weight' AND value_num IS NOT NULL) SELECT g AS \"体重\" FROM w ORDER BY ts DESC LIMIT 1"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "#73BF69",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix: g",
+            "decimals": 0,
+            "noValue": "まだ記録がありません"
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 10,
+        "type": "stat",
+        "title": "出生時から",
+        "description": "最初の記録から最新の記録までの増減。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 4,
+          "y": 7,
+          "w": 5,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "WITH w AS (SELECT ts, (CASE WHEN value_unit = 'kg' THEN value_num * 1000 ELSE value_num END)::float8 AS g FROM events WHERE type = 'Weight' AND value_num IS NOT NULL), f AS (SELECT * FROM w ORDER BY ts LIMIT 1), l AS (SELECT * FROM w ORDER BY ts DESC LIMIT 1) SELECT l.g - f.g AS \"増減\" FROM f, l WHERE l.ts > f.ts"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "#56A64B",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix: g",
+            "decimals": 0,
+            "noValue": "測定が2回以上必要です"
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "value",
+          "graphMode": "none",
+          "textMode": "value",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 11,
+        "type": "stat",
+        "title": "1日あたり（出生時から）",
+        "description": "最初の記録から最新の記録までの1日あたりの平均増加。生まれた直後の体重減少も含みます。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 9,
+          "y": 7,
+          "w": 5,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "WITH w AS (SELECT ts, (CASE WHEN value_unit = 'kg' THEN value_num * 1000 ELSE value_num END)::float8 AS g FROM events WHERE type = 'Weight' AND value_num IS NOT NULL), b AS (SELECT * FROM w ORDER BY ts LIMIT 1), l AS (SELECT * FROM w ORDER BY ts DESC LIMIT 1) SELECT (l.g - b.g) / (EXTRACT(EPOCH FROM l.ts - b.ts) / 86400.0) AS \"1日あたり\" FROM b, l WHERE l.ts > b.ts"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "#56A64B",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix: g/日",
+            "decimals": 1,
+            "noValue": "測定が2回以上必要です"
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "value",
+          "graphMode": "none",
+          "textMode": "value",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 12,
+        "type": "stat",
+        "title": "1日あたり（最低体重から）",
+        "description": "いちばん軽かった記録から最新の記録までの1日あたりの平均増加（生まれた直後の減少後の増え方）。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 14,
+          "y": 7,
+          "w": 5,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "WITH w AS (SELECT ts, (CASE WHEN value_unit = 'kg' THEN value_num * 1000 ELSE value_num END)::float8 AS g FROM events WHERE type = 'Weight' AND value_num IS NOT NULL), b AS (SELECT * FROM w ORDER BY g, ts LIMIT 1), l AS (SELECT * FROM w ORDER BY ts DESC LIMIT 1) SELECT (l.g - b.g) / (EXTRACT(EPOCH FROM l.ts - b.ts) / 86400.0) AS \"1日あたり\" FROM b, l WHERE l.ts > b.ts"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "#56A64B",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix: g/日",
+            "decimals": 1,
+            "noValue": "測定が2回以上必要です"
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "value",
+          "graphMode": "none",
+          "textMode": "value",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 13,
+        "type": "stat",
+        "title": "1日あたり（前回の測定から）",
+        "description": "ひとつ前の記録から最新の記録までの1日あたりの増加。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 19,
+          "y": 7,
+          "w": 5,
+          "h": 5
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "WITH w AS (SELECT ts, (CASE WHEN value_unit = 'kg' THEN value_num * 1000 ELSE value_num END)::float8 AS g FROM events WHERE type = 'Weight' AND value_num IS NOT NULL), b AS (SELECT * FROM w ORDER BY ts DESC OFFSET 1 LIMIT 1), l AS (SELECT * FROM w ORDER BY ts DESC LIMIT 1) SELECT (l.g - b.g) / (EXTRACT(EPOCH FROM l.ts - b.ts) / 86400.0) AS \"1日あたり\" FROM b, l WHERE l.ts > b.ts"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "#56A64B",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix: g/日",
+            "decimals": 1,
+            "noValue": "測定が2回以上必要です"
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "colorMode": "value",
+          "graphMode": "none",
+          "textMode": "value",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "wideLayout": true
+        }
+      },
+      {
+        "id": 14,
+        "type": "timeseries",
+        "title": "体重の推移",
+        "description": "体重（g）。期間の選択に関係なく直近30日を表示します。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 0,
+          "y": 12,
+          "w": 14,
+          "h": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "time_series",
+            "rawQuery": true,
+            "rawSql": "WITH w AS (SELECT ts, (CASE WHEN value_unit = 'kg' THEN value_num * 1000 ELSE value_num END)::float8 AS g FROM events WHERE type = 'Weight' AND value_num IS NOT NULL) SELECT ts AS time, g AS \"体重\" FROM w ORDER BY ts"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "fixed",
+              "fixedColor": "#73BF69"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix: g",
+            "decimals": 0,
+            "noValue": "まだ記録がありません",
+            "custom": {
+              "drawStyle": "line",
+              "lineWidth": 2,
+              "showPoints": "always",
+              "pointSize": 9,
+              "spanNulls": true,
+              "fillOpacity": 10
+            }
+          },
+          "overrides": []
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "timeFrom": "30d"
+      },
+      {
+        "id": 15,
+        "type": "table",
+        "title": "測定ごとの増加",
+        "description": "それぞれの記録とひとつ前の記録との差、および1日あたりの増加。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 14,
+          "y": 12,
+          "w": 10,
+          "h": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "WITH w AS (SELECT ts, (CASE WHEN value_unit = 'kg' THEN value_num * 1000 ELSE value_num END)::float8 AS g FROM events WHERE type = 'Weight' AND value_num IS NOT NULL), x AS (SELECT ts, g, lag(g) OVER o AS pg, lag(ts) OVER o AS pts FROM w WINDOW o AS (ORDER BY ts)) SELECT ts AS \"測定日\", g AS \"体重\", g - pg AS \"前回比\", (g - pg) / NULLIF(EXTRACT(EPOCH FROM ts - pts) / 86400.0, 0) AS \"1日あたり\" FROM x ORDER BY ts DESC"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "noValue": "-"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "測定日"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "time:YYYY/MM/DD"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "体重"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "suffix: g"
+                },
+                {
+                  "id": "decimals",
+                  "value": 0
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "前回比"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "suffix: g"
+                },
+                {
+                  "id": "decimals",
+                  "value": 0
+                },
+                {
+                  "id": "custom.cellOptions",
+                  "value": {
+                    "type": "color-text"
+                  }
+                },
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "thresholds"
+                  }
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "red",
+                        "value": null
+                      },
+                      {
+                        "color": "green",
+                        "value": 0
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "1日あたり"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "suffix: g/日"
+                },
+                {
+                  "id": "decimals",
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "showHeader": true,
+          "cellHeight": "sm"
+        }
+      },
+      {
+        "id": 16,
+        "type": "row",
+        "title": "📈 毎日の推移（日本時間）",
+        "collapsed": false,
+        "gridPos": {
+          "x": 0,
+          "y": 20,
+          "w": 24,
+          "h": 1
+        },
+        "panels": []
+      },
+      {
+        "id": 17,
+        "type": "barchart",
+        "title": "1日のミルク量",
+        "description": "日本時間の1日ごとのミルク・搾母乳の量。今日は途中経過です。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 0,
+          "y": 21,
+          "w": 8,
+          "h": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT to_char(day, 'MM/DD') AS \"日付\", sum(value_num) FILTER (WHERE type = 'Formula') AS \"🍼 ミルク\", sum(value_num) FILTER (WHERE type = 'ExpressedBreastMilk') AS \"🍼 搾母乳\" FROM (SELECT (ts AT TIME ZONE 'Asia/Tokyo')::date AS day, type, value_num, left_sec, right_sec FROM events WHERE $__timeFilter(ts) AND type IN ('Formula','ExpressedBreastMilk')) e GROUP BY day ORDER BY day"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "ml",
+            "custom": {
+              "fillOpacity": 85,
+              "lineWidth": 0
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "🍼 ミルク"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#B877D9"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "🍼 搾母乳"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#F2CC0C"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "xField": "日付",
+          "xTickLabelSpacing": 60,
+          "showValue": "never",
+          "stacking": "normal",
+          "groupWidth": 0.75,
+          "barWidth": 0.9,
+          "orientation": "auto",
+          "tooltip": {
+            "mode": "multi"
+          }
+        }
+      },
+      {
+        "id": 18,
+        "type": "barchart",
+        "title": "1日の母乳時間",
+        "description": "日本時間の1日ごとの母乳時間（分）、左右別。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 8,
+          "y": 21,
+          "w": 8,
+          "h": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT to_char(day, 'MM/DD') AS \"日付\", sum(left_sec / 60.0) AS \"左\", sum(right_sec / 60.0) AS \"右\" FROM (SELECT (ts AT TIME ZONE 'Asia/Tokyo')::date AS day, type, value_num, left_sec, right_sec FROM events WHERE $__timeFilter(ts) AND type IN ('BreastFeeding')) e GROUP BY day ORDER BY day"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix:分",
+            "decimals": 0,
+            "custom": {
+              "fillOpacity": 85,
+              "lineWidth": 0
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "左"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#FF9EC4"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "右"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#C4A2FF"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "xField": "日付",
+          "xTickLabelSpacing": 60,
+          "showValue": "never",
+          "stacking": "normal",
+          "groupWidth": 0.75,
+          "barWidth": 0.9,
+          "orientation": "auto",
+          "tooltip": {
+            "mode": "multi"
+          }
+        }
+      },
+      {
+        "id": 19,
+        "type": "barchart",
+        "title": "1日の授乳回数",
+        "description": "日本時間の1日ごとの授乳回数、種類別。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 16,
+          "y": 21,
+          "w": 8,
+          "h": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT to_char(day, 'MM/DD') AS \"日付\", sum(1) FILTER (WHERE type = 'BreastFeeding') AS \"🤱 母乳\", sum(1) FILTER (WHERE type = 'Formula') AS \"🍼 ミルク\", sum(1) FILTER (WHERE type = 'ExpressedBreastMilk') AS \"🍼 搾母乳\" FROM (SELECT (ts AT TIME ZONE 'Asia/Tokyo')::date AS day, type, value_num, left_sec, right_sec FROM events WHERE $__timeFilter(ts) AND type IN ('BreastFeeding','Formula','ExpressedBreastMilk')) e GROUP BY day ORDER BY day"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix:回",
+            "custom": {
+              "fillOpacity": 85,
+              "lineWidth": 0
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "🤱 母乳"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#FF9EC4"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "🍼 ミルク"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#B877D9"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "🍼 搾母乳"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#F2CC0C"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "xField": "日付",
+          "xTickLabelSpacing": 60,
+          "showValue": "never",
+          "stacking": "normal",
+          "groupWidth": 0.75,
+          "barWidth": 0.9,
+          "orientation": "auto",
+          "tooltip": {
+            "mode": "multi"
+          }
+        }
+      },
+      {
+        "id": 20,
+        "type": "barchart",
+        "title": "1日のおむつ",
+        "description": "日本時間の1日ごとのおしっこ・うんちの回数。赤い線は6回（アラートの目安）。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 0,
+          "y": 29,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT to_char(day, 'MM/DD') AS \"日付\", sum(1) FILTER (WHERE type = 'Pee') AS \"💧 おしっこ\", sum(1) FILTER (WHERE type = 'Poop') AS \"💩 うんち\" FROM (SELECT (ts AT TIME ZONE 'Asia/Tokyo')::date AS day, type, value_num, left_sec, right_sec FROM events WHERE $__timeFilter(ts) AND type IN ('Pee','Poop')) e GROUP BY day ORDER BY day"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "transparent",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 6
+                }
+              ]
+            },
+            "unit": "suffix:回",
+            "custom": {
+              "fillOpacity": 85,
+              "lineWidth": 0,
+              "thresholdsStyle": {
+                "mode": "dashed"
+              }
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "💧 おしっこ"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#73BFEB"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "💩 うんち"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#A0784B"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "xField": "日付",
+          "xTickLabelSpacing": 60,
+          "showValue": "never",
+          "stacking": "normal",
+          "groupWidth": 0.75,
+          "barWidth": 0.9,
+          "orientation": "auto",
+          "tooltip": {
+            "mode": "multi"
+          }
+        }
+      },
+      {
+        "id": 21,
+        "type": "barchart",
+        "title": "授乳の最長間隔",
+        "description": "1日のうち授乳があいた最長時間（次の授乳があった日に数えます）。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 12,
+          "y": 29,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT to_char(day, 'MM/DD') AS \"日付\", longest_feed_gap_min / 60.0 AS \"最長間隔\" FROM v_daily WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE 'Asia/Tokyo')::date ORDER BY day"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "fixed",
+              "fixedColor": "#FF9830"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "suffix:時間",
+            "decimals": 1,
+            "custom": {
+              "fillOpacity": 85,
+              "lineWidth": 0
+            }
+          },
+          "overrides": []
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "xField": "日付",
+          "xTickLabelSpacing": 60,
+          "showValue": "never",
+          "stacking": "none",
+          "groupWidth": 0.75,
+          "barWidth": 0.9,
+          "orientation": "auto",
+          "tooltip": {
+            "mode": "multi"
+          }
+        }
+      },
+      {
+        "id": 22,
+        "type": "row",
+        "title": "⏱️ 最近の記録",
+        "collapsed": false,
+        "gridPos": {
+          "x": 0,
+          "y": 37,
+          "w": 24,
+          "h": 1
+        },
+        "panels": []
+      },
+      {
+        "id": 23,
+        "type": "table",
+        "title": "記録一覧",
+        "description": "選択期間の最新の記録。メモはGrafanaから見えないようにしています。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 0,
+          "y": 38,
+          "w": 14,
+          "h": 10
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT ts AS \"時刻\", CASE type WHEN 'BreastFeeding' THEN '🤱 母乳' WHEN 'Formula' THEN '🍼 ミルク' WHEN 'ExpressedBreastMilk' THEN '🍼 搾母乳' WHEN 'Pumping' THEN '搾乳' WHEN 'Pee' THEN '💧 おしっこ' WHEN 'Poop' THEN '💩 うんち' WHEN 'Sleep' THEN '😴 寝る' WHEN 'WakeUp' THEN '🌞 起きる' WHEN 'Weight' THEN '⚖️ 体重' WHEN 'Height' THEN '📏 身長' WHEN 'Bath' THEN '🛁 お風呂' WHEN 'Memo' THEN '📝 メモ' ELSE type END AS \"種類\", CASE WHEN type = 'BreastFeeding' THEN concat_ws(' / ', '左 ' || round(left_sec / 60) || '分', '右 ' || round(right_sec / 60) || '分') WHEN type = 'Weight' THEN round(CASE WHEN value_unit = 'kg' THEN value_num * 1000 ELSE value_num END) || ' g' WHEN value_num IS NOT NULL THEN value_num::text || ' ' || COALESCE(value_unit, '') WHEN type = 'Poop' THEN concat_ws(' · ', poop_amount, poop_hardness, poop_color) ELSE '' END AS \"詳細\" FROM events WHERE $__timeFilter(ts) ORDER BY ts DESC LIMIT 300"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "時刻"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "time:MM/DD HH:mm"
+                },
+                {
+                  "id": "custom.width",
+                  "value": 130
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "種類"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 140
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "showHeader": true,
+          "cellHeight": "sm"
+        }
+      },
+      {
+        "id": 24,
+        "type": "timeseries",
+        "title": "1回ごとのミルク量",
+        "description": "ミルク・搾母乳の記録ごとの量（ml）。",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "piyolog-postgres"
+        },
+        "gridPos": {
+          "x": 14,
+          "y": 38,
+          "w": 10,
+          "h": 10
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "editorMode": "code",
+            "format": "time_series",
+            "rawQuery": true,
+            "rawSql": "SELECT ts AS time, value_num AS \"ml\", CASE type WHEN 'Formula' THEN '🍼 ミルク' ELSE '🍼 搾母乳' END AS metric FROM events WHERE $__timeFilter(ts) AND type IN ('Formula','ExpressedBreastMilk') AND value_num IS NOT NULL ORDER BY ts"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "ml",
+            "custom": {
+              "drawStyle": "points",
+              "pointSize": 8,
+              "showPoints": "always",
+              "axisSoftMin": 0
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ml 🍼 ミルク"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#B877D9"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "🍼 ミルク"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#B877D9"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "🍼 搾母乳"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "#F2CC0C"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        }
+      },
+      {
+        "id": 27,
+        "type": "row",
+        "title": "😴 睡眠",
+        "collapsed": true,
+        "gridPos": {
+          "x": 0,
+          "y": 48,
+          "w": 24,
+          "h": 1
+        },
+        "panels": [
+          {
+            "id": 25,
+            "type": "barchart",
+            "title": "1日の睡眠時間",
+            "description": "日本時間の1日ごとに切り取った睡眠時間。寝る・起きるのペアから計算します。",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "gridPos": {
+              "x": 0,
+              "y": 49,
+              "w": 12,
+              "h": 7
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "datasource": {
+                  "type": "grafana-postgresql-datasource",
+                  "uid": "piyolog-postgres"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT to_char(day, 'MM/DD') AS \"日付\", sleep_hours AS \"睡眠\" FROM v_daily WHERE sleep_hours IS NOT NULL AND day >= ($__timeFrom()::timestamptz AT TIME ZONE 'Asia/Tokyo')::date ORDER BY day"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "fixed",
+                  "fixedColor": "#8F3BB8"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    }
+                  ]
+                },
+                "unit": "suffix:時間",
+                "decimals": 1,
+                "noValue": "まだ睡眠の記録がありません 💤",
+                "custom": {
+                  "fillOpacity": 85,
+                  "lineWidth": 0
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "xField": "日付",
+              "xTickLabelSpacing": 60,
+              "showValue": "never",
+              "stacking": "none",
+              "groupWidth": 0.75,
+              "barWidth": 0.9,
+              "orientation": "auto",
+              "tooltip": {
+                "mode": "multi"
+              }
+            }
+          },
+          {
+            "id": 26,
+            "type": "table",
+            "title": "睡眠の記録",
+            "description": "寝た→起きたのペア。",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "gridPos": {
+              "x": 12,
+              "y": 49,
+              "w": 12,
+              "h": 7
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "datasource": {
+                  "type": "grafana-postgresql-datasource",
+                  "uid": "piyolog-postgres"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT sleep_start AS \"寝た\", sleep_end AS \"起きた\", hours AS \"時間\" FROM v_sleep_sessions WHERE sleep_start >= $__timeFrom()::timestamptz ORDER BY sleep_start DESC LIMIT 100"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    }
+                  ]
+                },
+                "noValue": "まだ睡眠の記録がありません 💤"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "寝た"
+                  },
+                  "properties": [
+                    {
+                      "id": "unit",
+                      "value": "time:MM/DD HH:mm"
+                    }
+                  ]
+                },
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "起きた"
+                  },
+                  "properties": [
+                    {
+                      "id": "unit",
+                      "value": "time:MM/DD HH:mm"
+                    }
+                  ]
+                },
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "時間"
+                  },
+                  "properties": [
+                    {
+                      "id": "unit",
+                      "value": "suffix:時間"
+                    },
+                    {
+                      "id": "decimals",
+                      "value": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            "options": {
+              "showHeader": true,
+              "cellHeight": "sm"
+            }
+          }
+        ]
+      },
+      {
+        "id": 32,
+        "type": "row",
+        "title": "🛠️ 収集の状態",
+        "collapsed": true,
+        "gridPos": {
+          "x": 0,
+          "y": 49,
+          "w": 24,
+          "h": 1
+        },
+        "panels": [
+          {
+            "id": 28,
+            "type": "stat",
+            "title": "最終収集",
+            "description": "コレクターが最後に動いてからの時間。10分ごとに取得し、30分を超えると赤。",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "gridPos": {
+              "x": 0,
+              "y": 50,
+              "w": 6,
+              "h": 4
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "datasource": {
+                  "type": "grafana-postgresql-datasource",
+                  "uid": "piyolog-postgres"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT EXTRACT(EPOCH FROM now() - max(ran_at)) / 60.0 AS \"最終実行\" FROM collector_runs"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 30
+                    }
+                  ]
+                },
+                "unit": "suffix:分前",
+                "decimals": 0
+              },
+              "overrides": []
+            },
+            "options": {
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "value",
+              "justifyMode": "center",
+              "orientation": "auto",
+              "wideLayout": true
+            }
+          },
+          {
+            "id": 29,
+            "type": "stat",
+            "title": "最終ステータス",
+            "description": "最新のコレクター実行の結果。",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "gridPos": {
+              "x": 6,
+              "y": 50,
+              "w": 6,
+              "h": 4
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "datasource": {
+                  "type": "grafana-postgresql-datasource",
+                  "uid": "piyolog-postgres"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT status AS \"状態\" FROM collector_runs ORDER BY ran_at DESC LIMIT 1"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    }
+                  ]
+                }
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "状態"
+                  },
+                  "properties": [
+                    {
+                      "id": "mappings",
+                      "value": [
+                        {
+                          "type": "value",
+                          "options": {
+                            "ok": {
+                              "color": "green",
+                              "text": "正常"
+                            },
+                            "error": {
+                              "color": "red",
+                              "text": "エラー"
+                            },
+                            "rate_limited": {
+                              "color": "orange",
+                              "text": "制限中"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "options": {
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "/.*/",
+                "values": false
+              },
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "value",
+              "justifyMode": "center",
+              "orientation": "auto",
+              "wideLayout": true
+            }
+          },
+          {
+            "id": 30,
+            "type": "stat",
+            "title": "フィードURLの期限",
+            "description": "ぴよログのフィードURLが切れるまでの日数（FEED_EXPIRES_ON）。",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "gridPos": {
+              "x": 12,
+              "y": 50,
+              "w": 6,
+              "h": 4
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "datasource": {
+                  "type": "grafana-postgresql-datasource",
+                  "uid": "piyolog-postgres"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT feed_expires_on - (now() AT TIME ZONE 'Asia/Tokyo')::date AS \"残り日数\" FROM collector_runs WHERE feed_expires_on IS NOT NULL ORDER BY ran_at DESC LIMIT 1"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 14
+                    },
+                    {
+                      "color": "green",
+                      "value": 30
+                    }
+                  ]
+                },
+                "unit": "suffix:日",
+                "noValue": "不明（FEED_EXPIRES_ONを設定）"
+              },
+              "overrides": []
+            },
+            "options": {
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "value",
+              "justifyMode": "center",
+              "orientation": "auto",
+              "wideLayout": true
+            }
+          },
+          {
+            "id": 31,
+            "type": "stat",
+            "title": "保存済みの記録",
+            "description": "Postgresに保存されている記録の総数。",
+            "datasource": {
+              "type": "grafana-postgresql-datasource",
+              "uid": "piyolog-postgres"
+            },
+            "gridPos": {
+              "x": 18,
+              "y": 50,
+              "w": 6,
+              "h": 4
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "datasource": {
+                  "type": "grafana-postgresql-datasource",
+                  "uid": "piyolog-postgres"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT count(*) AS \"記録数\" FROM events"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#5794F2",
+                      "value": null
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "value",
+              "justifyMode": "center",
+              "orientation": "auto",
+              "wideLayout": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
